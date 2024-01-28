@@ -26,9 +26,9 @@
   background-color: transparent;
   padding: 15px;
   border-radius: 4px;
-  max-width: calc(90vw * 2);
-  max-height: calc(90vh * 2);
-  position: relative;
+  max-width: calc(90vw - 30px);
+  max-height: calc(90vh - 30px);
+  /* position: relative; */
   overflow: hidden;
   transform: scale(2);
   transition: transform 0.3s ease;

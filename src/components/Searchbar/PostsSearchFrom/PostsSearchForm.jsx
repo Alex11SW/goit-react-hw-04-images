@@ -1,50 +1,53 @@
-import { Component } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import styles from "./posts-search-form.module.css";
 
-class PostsSearchForm extends Component {
-  state = {
+const PostsSearchForm = ({ onSubmit }) => {
+  const [state, setState] = useState({
     search: "",
-  };
+  });
 
-  handleChange = ({ target }) => {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current.focus();
+  }, []);
+  const handleChange = ({ target }) => {
     const { name, value } = target;
-    this.setState({
+    setState({
       [name]: value.toLowerCase(),
     });
   };
-  handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    this.props.onSubmit(this.state.search);
-    this.setState({
+    onSubmit({ ...state.search });
+    setState({
       search: "",
     });
   };
-  render() {
-    const { handleChange, handleSubmit } = this;
-    const { search } = this.state;
-    return (
-      <header className={styles.searchbar}>
-        <form onSubmit={handleSubmit} className={styles.SearchForm}>
-          <button type="submit" className={styles.SearchFormbutton}>
-            <span className={styles["button-label"]}>Search</span>
-          </button>
 
-          <input
-            name="search"
-            value={search}
-            onChange={handleChange}
-            className={styles.SearchForminput}
-            type="text"
-            // autocomplete="off"
-            // autofocus
-            placeholder="Search images and photos"
-            required
-          />
-        </form>
-      </header>
-    );
-  }
-}
+  return (
+    <header className={styles.searchbar}>
+      <form onSubmit={handleSubmit} className={styles.SearchForm}>
+        <button type="submit" className={styles.SearchFormbutton}>
+          <span className={styles["button-label"]}>Search</span>
+        </button>
+
+        <input
+          ref={inputRef}
+          name="search"
+          value={state.search}
+          onChange={handleChange}
+          className={styles.SearchForminput}
+          type="text"
+          // autocomplete="off"
+          // autofocus
+          placeholder="Search images and photos"
+          required
+        />
+      </form>
+    </header>
+  );
+};
 
 export default PostsSearchForm;

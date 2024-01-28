@@ -1,117 +1,85 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import styles from "./searchbar.module.css";
 import { searchPosts } from "../../api/posts";
 import Button from "../Button/Button";
-
 import PostsSearchForm from "./PostsSearchFrom/PostsSearchForm";
 import ImageGallery from "../ImageGallery/ImageGallery";
 import Modal from "../Modal/Modal";
 
-class Searchbar extends Component {
-  state = {
-    search: "",
-    posts: [],
-    loading: false,
-    error: null,
-    currentPage: 1,
-    modalOpen: false,
-    postDetails: {},
-  };
-  componentDidUpdate(prevProps, prevState) {
-    const { search, currentPage } = this.state;
-    if (
-      (search && search !== prevState.search) ||
-      currentPage !== prevState.currentPage
-    ) {
-      this.fetchPosts();
+const Searchbar = () => {
+  const [search, setSearch] = useState("");
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [postDetails, setPostDetails] = useState({});
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const { data } = await searchPosts(search, currentPage);
+
+        const newPosts =
+          currentPage === 1
+            ? data?.hits || []
+            : data?.hits.filter((post) => !posts.some((p) => p.id === post.id));
+
+        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (search) {
+      fetchPosts();
     }
-  }
+  }, [search, currentPage]);
 
-  async fetchPosts() {
-    const { search, currentPage, posts } = this.state;
-    try {
-      this.setState({
-        loading: true,
-      });
-      const { data } = await searchPosts(search, currentPage);
-      console.log(data);
-
-      const newPosts =
-        currentPage === 1
-          ? data?.hits || []
-          : data?.hits.filter((post) => !posts.some((p) => p.id === post.id));
-
-      this.setState((prevState) => ({
-        posts: [...prevState.posts, ...newPosts],
-      }));
-    } catch (error) {
-      this.setState({
-        error: error.message,
-      });
-    } finally {
-      this.setState({
-        loading: false,
-      });
-    }
-  }
-
-  handleSearch = (searchQuery) => {
-    this.setState({
-      search: searchQuery,
-      currentPage: 1,
-      posts: [],
-    });
+  const handleSearch = (searchQuery) => {
+    setSearch(searchQuery);
+    setCurrentPage(1);
+    setPosts([]);
   };
-  handleImageClick = (webformatURL) => {
-    this.setState({
-      modalOpen: true,
-      postDetails: {
-        webformatURL,
-      },
+  const handleImageClick = (webformatURL) => {
+    setModalOpen(true);
+    setPostDetails({
+      webformatURL,
     });
   };
 
-  handleLoadMore = () => {
-    this.setState((prevState) => ({
-      currentPage: prevState.currentPage + 1,
-    }));
+  const handleLoadMore = () => {
+    setCurrentPage((prevPage) => prevPage + 1);
   };
 
-  handleCloseModal = () => {
-    this.setState({
-      modalOpen: false,
-    });
+  const handleCloseModal = () => {
+    setModalOpen(false);
   };
 
-  render() {
-    const { handleSearch, handleLoadMore } = this;
-    const { posts, loading, error, postDetails } = this.state;
+  const isPost = Boolean(posts.length);
+  const shouldRenderLoadMore =
+    isPost && !loading && !error && posts.length % 12 === 0;
 
-    const isPost = Boolean(posts.length);
-    const shouldRenderLoadMore =
-      isPost && !loading && !error && posts.length % 12 === 0;
-
-    return (
-      <>
-        <PostsSearchForm onSubmit={handleSearch} />
-        {error && <p className={styles.error}>{error}</p>}
-        {loading && <p>...Loading</p>}
-        {isPost && (
-          <ImageGallery hits={posts} onImageClick={this.handleImageClick} />
-        )}
-        {shouldRenderLoadMore && (
-          <Button onClick={handleLoadMore} type="button">
-            Load more
-          </Button>
-        )}
-        {this.state.modalOpen && (
-          <Modal onClose={this.handleCloseModal}>
-            <img src={postDetails.webformatURL} alt="" />
-          </Modal>
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <PostsSearchForm onSubmit={handleSearch} />
+      {error && <p className={styles.error}>{error}</p>}
+      {loading && <p>...Loading</p>}
+      {isPost && <ImageGallery hits={posts} onImageClick={handleImageClick} />}
+      {shouldRenderLoadMore && (
+        <Button onClick={handleLoadMore} type="button">
+          Load more
+        </Button>
+      )}
+      {modalOpen && (
+        <Modal onClose={handleCloseModal}>
+          <img src={postDetails.webformatURL} alt="" />
+        </Modal>
+      )}
+    </>
+  );
+};
 
 export default Searchbar;

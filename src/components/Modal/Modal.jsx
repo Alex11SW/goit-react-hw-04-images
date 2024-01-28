@@ -1,45 +1,50 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styles from "./modal.module.css";
 
 const modalRoot = document.getElementById("modal-root");
 
-class Modal extends Component {
-  componentDidMount() {
-    document.addEventListener("keydown", this.handleKeyDown);
-  }
-  componentDidUpdate() {
-    document.removeEventListener("keydown", this.handleKeyDown);
-  }
-  componentWillUnmount() {
-    document.removeEventListener("keydown", this.handleKeyDown);
-  }
+const Modal = ({ onClose, children }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-  handleKeyDown = (event) => {
-    if (event.code === "Escape") {
-      this.handleClose();
+  useEffect(() => {
+    setIsOpen(true);
+    return () => {
+      setIsOpen(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const modalElement = document.createElement("div");
+      modalRoot.appendChild(modalElement);
+      return () => {
+        modalRoot.removeChild(modalElement);
+      };
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose();
+  };
+  const handleOverlayClick = (event) => {
+    if (!event.target.closest(`.${styles.modal}`)) {
+      handleClose();
     }
   };
 
-  handleClose = () => {
-    const { onClose } = this.props;
-    if (onClose) {
-      onClose();
-    }
-  };
-  render() {
-    const { children } = this.props;
-    return createPortal(
-      <div className={styles.overlay}>
-        <div className={styles.modal}>
-          <span className={styles.close} onClick={this.handleClose}>
-            X
-          </span>
-          <div className={styles["image-container"]}>{children}</div>
-        </div>
-      </div>,
-      modalRoot
-    );
-  }
-}
+  return createPortal(
+    <div className={styles.overlay} onClick={handleOverlayClick}>
+      <div className={styles.modal}>
+        <span className={styles.close} onClick={handleClose}>
+          X
+        </span>
+        <div className={styles["image-container"]}>{children}</div>
+      </div>
+    </div>,
+    modalRoot
+  );
+};
+
 export default Modal;
