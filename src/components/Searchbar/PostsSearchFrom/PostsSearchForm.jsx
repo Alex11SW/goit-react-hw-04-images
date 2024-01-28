@@ -1,11 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-
 import styles from "./posts-search-form.module.css";
 
 const PostsSearchForm = ({ onSubmit }) => {
-  const [state, setState] = useState({
-    search: "",
-  });
+  const [search, setSearch] = useState("");
 
   const inputRef = useRef(null);
 
@@ -13,17 +10,12 @@ const PostsSearchForm = ({ onSubmit }) => {
     inputRef.current.focus();
   }, []);
   const handleChange = ({ target }) => {
-    const { name, value } = target;
-    setState({
-      [name]: value.toLowerCase(),
-    });
+    setSearch(target.value.toLowerCase());
   };
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...state.search });
-    setState({
-      search: "",
-    });
+    onSubmit(search);
+    setSearch("");
   };
 
   return (
@@ -36,7 +28,7 @@ const PostsSearchForm = ({ onSubmit }) => {
         <input
           ref={inputRef}
           name="search"
-          value={state.search}
+          value={search}
           onChange={handleChange}
           className={styles.SearchForminput}
           type="text"
